@@ -1,0 +1,128 @@
+name: Deploy All Sites to GitHub Pages
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  deploy-beauty-salon:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        cache-dependency-path: examples/beauty-salon/package-lock.json
+    
+    - name: Install dependencies
+      run: |
+        cd examples/beauty-salon
+        npm ci
+    
+    - name: Build
+      run: |
+        cd examples/beauty-salon
+        npm run build
+    
+    - name: Deploy to GitHub Pages
+      uses: peaceiris/actions-gh-pages@v3
+      if: github.ref == 'refs/heads/main'
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_dir: examples/beauty-salon/build
+        destination_dir: beauty-salon
+
+  deploy-dubai-real-estate:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        cache-dependency-path: examples/dubai-real-estate/package-lock.json
+    
+    - name: Install dependencies
+      run: |
+        cd examples/dubai-real-estate
+        npm ci
+    
+    - name: Build
+      run: |
+        cd examples/dubai-real-estate
+        npm run build
+    
+    - name: Deploy to GitHub Pages
+      uses: peaceiris/actions-gh-pages@v3
+      if: github.ref == 'refs/heads/main'
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_dir: examples/dubai-real-estate/build
+        destination_dir: dubai-real-estate
+
+  deploy-marketing-agency:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        cache-dependency-path: examples/marketing-agency/package-lock.json
+    
+    - name: Install dependencies
+      run: |
+        cd examples/marketing-agency
+        npm ci
+    
+    - name: Build
+      run: |
+        cd examples/marketing-agency
+        npm run build
+    
+    - name: Deploy to GitHub Pages
+      uses: peaceiris/actions-gh-pages@v3
+      if: github.ref == 'refs/heads/main'
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_dir: examples/marketing-agency/build
+        destination_dir: marketing-agency
+
+  deploy-moscow-real-estate:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        cache-dependency-path: examples/moscow-real-estate/package-lock.json
+    
+    - name: Install dependencies
+      run: |
+        cd examples/moscow-real-estate
+        npm ci
+    
+    - name: Build
+      run: |
+        cd examples/moscow-real-estate
+        npm run build
+    
+    - name: Deploy to GitHub Pages
+      uses: peaceiris/actions-gh-pages@v3
+      if: github.ref == 'refs/heads/main'
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_dir: examples/moscow-real-estate/build
+        destination_dir: moscow-real-estate
