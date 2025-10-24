@@ -47,6 +47,7 @@
     "rollup-plugin-terser": "npm:@rollup/plugin-terser@^0.4.4",
     "svgo": "^3.0.0",
     "eslint": "^8.57.0",
+    "typescript": "^4.9.5",
     "@babel/plugin-proposal-private-methods": "npm:@babel/plugin-transform-private-methods@^7.24.0",
     "@babel/plugin-proposal-class-properties": "npm:@babel/plugin-transform-class-properties@^7.24.0",
     "@babel/plugin-proposal-numeric-separator": "npm:@babel/plugin-transform-numeric-separator@^7.24.0",
