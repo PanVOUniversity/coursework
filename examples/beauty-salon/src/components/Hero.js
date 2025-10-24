@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { FaArrowDown, FaStar } from 'react-icons/fa';
+import { FaStar } from 'react-icons/fa';
 import './styles.css';
 
 const Hero = () => {
