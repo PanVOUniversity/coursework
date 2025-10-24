@@ -1,0 +1,18 @@
+{
+  "name": "beauty-salon",
+  "version": "1.0.0",
+  "description": "Beauty salon website",
+  "scripts": {
+    "start": "react-scripts start",
+    "build": "react-scripts build"
+  },
+  "dependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-scripts": "5.0.1",
+    "framer-motion": "^10.16.4",
+    "react-icons": "^4.11.0",
+    "react-intersection-observer": "^9.5.2",
+    "react-hot-toast": "^2.4.1"
+  }
+}
