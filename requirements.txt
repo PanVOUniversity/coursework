@@ -1,0 +1,42 @@
+# Core dependencies
+numpy>=1.21.0
+opencv-python>=4.5.0
+Pillow>=8.0.0
+tqdm>=4.62.0
+
+# Playwright for rendering
+playwright>=1.20.0
+
+# Detectron2 dependencies
+# IMPORTANT: Install PyTorch FIRST before Detectron2!
+# For CPU: pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu
+# For GPU: pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
+# Then install Detectron2: pip install 'git+https://github.com/facebookresearch/detectron2.git'
+torch>=1.13.0
+torchvision>=0.14.0
+
+# COCO tools
+pycocotools>=2.0.4
+
+# CLI
+click>=8.0.0
+
+# Jupyter (optional, for notebooks)
+jupyter>=1.0.0
+matplotlib>=3.5.0
+
+# Note: Detectron2 installation depends on CUDA version and PyTorch version
+# 
+# Method 1: Install from source (recommended):
+#   pip install 'git+https://github.com/facebookresearch/detectron2.git'
+#
+# Method 2: Install pre-built wheels (check PyTorch version first):
+#   python -c "import torch; print(torch.__version__)"
+#   For PyTorch 2.0+ CPU: pip install detectron2 -f https://dl.fbaipublicfiles.com/detectron2/wheels/cpu/torch2.0/index.html
+#   For PyTorch 1.13 CPU: pip install detectron2 -f https://dl.fbaipublicfiles.com/detectron2/wheels/cpu/torch1.13/index.html
+#
+# Method 3: Alternative models if Detectron2 fails:
+#   pip install segmentation-models-pytorch  # U-Net alternative
+#
+# See https://github.com/facebookresearch/detectron2/blob/main/INSTALL.md for latest instructions
+
