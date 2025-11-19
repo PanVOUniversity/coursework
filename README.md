@@ -182,11 +182,9 @@ docker run --gpus all -v $(pwd)/data:/app/data -v $(pwd)/outputs:/app/outputs fr
 1. **Генерация HTML страниц:**
 
 ```bash
-# Стандартный размер (1920x1080)
+# Стандартный размер
 python scripts/html_generator.py --n 100 --min-frames 3 --max-frames 10
 
-# Кастомный размер страниц
-python scripts/html_generator.py --n 100 --page-width 2560 --page-height 1440
 ```
 
 2. **Рендеринг скриншотов:**
@@ -232,6 +230,70 @@ python detectron/infer_and_postprocess.py --weights outputs/model_final.pth --in
 - **Поддержка закругленных углов** (`border-radius`)
 - Lorem ipsum текст и случайные изображения через Picsum Photos
 - Сохраняет метаданные в JSON (x, y, w, h, z_index, id, border_radius)
+
+### Формат метаданных JSON
+
+Метаданные сохраняются в файлы `data/meta/page_*.json` со следующей структурой:
+
+```json
+{
+  "page_id": int,                    // ID страницы
+  "page_width": int,                 // Заданная ширина страницы
+  "actual_page_width": int,          // Фактическая ширина (может быть больше из-за контента)
+  "page_height": int,                // Высота страницы
+  "header": {                         // Конфигурация header (опционально)
+    "id": "header",
+    "x": int,                         // Позиция X
+    "y": int,                         // Позиция Y
+    "w": int,                         // Ширина
+    "h": int,                         // Высота
+    "z_index": int,                   // Z-index для наложения
+    "border_radius": int,             // Радиус скругления углов
+    "position": str,                  // CSS position (обычно "relative")
+    "bg_color": str,                  // Цвет фона (CSS формат)
+    "box_shadow": str,                // CSS box-shadow
+    "is_header": true                 // Флаг идентификации header
+  },
+  "footer": {                         // Конфигурация footer (опционально)
+    // Аналогичная структура как у header
+    "is_footer": true
+  },
+  "sliders": [                        // Массив слайдеров с фонами
+    {
+      "id": int,                      // ID слайдера
+      "height": int,                   // Высота слайдера
+      "top": int,                      // Позиция сверху
+      "background": {
+        "type": str,                  // Тип фона (например, "linear_gradient")
+        "css": str                    // CSS строка для фона
+      }
+    }
+  ],
+  "frames": [                         // Массив фреймов
+    {
+      "id": int,                      // Уникальный ID фрейма
+      "x": int,                       // Позиция X (абсолютная)
+      "y": int,                       // Позиция Y (абсолютная, с учетом header)
+      "w": int,                       // Ширина фрейма
+      "h": int,                       // Высота фрейма
+      "z_index": int,                 // Z-index для наложения (1-999)
+      "border_radius": int,           // Радиус скругления углов (0 до min(w,h)/4)
+      "bg_color": str,                // Цвет фона (CSS формат, например "rgb(241, 239, 212)")
+      "box_shadow": str,              // CSS box-shadow
+      "in_header": bool,              // Флаг: находится ли фрейм в области header
+      "in_footer": bool               // Флаг: находится ли фрейм в области footer
+    }
+  ]
+}
+```
+
+**Примечания:**
+
+- Все координаты и размеры указаны в пикселях
+- `page_width` и `actual_page_width` могут отличаться, если контент выходит за границы заданной ширины
+- Фреймы имеют координаты относительно начала страницы, но с учетом высоты header (y-координата сдвинута на высоту header)
+- `z_index` фреймов ограничен диапазоном 1-999 (header и footer имеют z-index 1000)
+- `border_radius` может быть 0 (прямоугольник) или положительным числом (скругленные углы)
 
 ### Playwright рендерер
 
