@@ -41,7 +41,6 @@ def clear_data_folders(data_dir="data"):
                         file_path.unlink()
                         deleted_count += 1
                         deleted_files.append(str(file_path))
-                        print(f"  Удален: {file_path.name}")
                     except Exception as e:
                         print(f"  Ошибка при удалении {file_path.name}: {e}")
     

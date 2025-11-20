@@ -1,13 +1,11 @@
 """Convert instance masks to COCO format.
 
-Extracts contours from instance masks and converts to COCO JSON format.
+Builds COCO annotations directly from metadata (like masks are built).
 """
 
 import argparse
 import json
-import shutil
 import numpy as np
-import cv2
 from pathlib import Path
 from pycocotools import mask as coco_mask
 from tqdm import tqdm
@@ -15,7 +13,7 @@ from tqdm import tqdm
 import sys
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from utils.color_mapping import color_to_id
+from utils.geometry import draw_rounded_rectangle_mask
 
 
 def load_metadata(meta_path: Path) -> dict:
@@ -24,94 +22,158 @@ def load_metadata(meta_path: Path) -> dict:
         return json.load(f)
 
 
-def extract_instance_from_mask(mask_image: np.ndarray, instance_id: int) -> np.ndarray:
-    """Extract binary mask for a specific instance ID.
+def create_binary_mask_from_metadata(frame_meta: dict, width: int, height: int) -> np.ndarray:
+    """Create binary mask for a frame directly from metadata.
+    
+    Optimized: creates mask only in ROI area instead of full image.
     
     Args:
-        mask_image: RGB mask image (H, W, 3)
-        instance_id: Instance ID to extract
+        frame_meta: Frame metadata dictionary with x, y, w, h, border_radius
+        width: Image width
+        height: Image height
         
     Returns:
-        Binary mask (H, W) with 255 for instance pixels, 0 for background
+        Binary mask (H, W) with 255 for frame pixels, 0 for background
     """
-    binary_mask = np.zeros((mask_image.shape[0], mask_image.shape[1]), dtype=np.uint8)
+    x = frame_meta['x']
+    y = frame_meta['y']
+    w = frame_meta['w']
+    h = frame_meta['h']
+    border_radius = frame_meta.get('border_radius', 0)
     
-    # Find pixels matching this instance ID
-    for y in range(mask_image.shape[0]):
-        for x in range(mask_image.shape[1]):
-            r, g, b = mask_image[y, x]
-            pixel_id = color_to_id(int(r), int(g), int(b))
-            if pixel_id == instance_id:
-                binary_mask[y, x] = 255
+    # Clamp coordinates to image bounds
+    x = max(0, min(x, width - 1))
+    y = max(0, min(y, height - 1))
+    w = min(w, width - x)
+    h = min(h, height - y)
+    
+    if w <= 0 or h <= 0:
+        return np.zeros((height, width), dtype=np.uint8)
+    
+    # Create mask only in ROI area (with padding for border_radius)
+    padding = border_radius + 2
+    roi_x = max(0, x - padding)
+    roi_y = max(0, y - padding)
+    roi_w = min(width - roi_x, w + 2 * padding)
+    roi_h = min(height - roi_y, h + 2 * padding)
+    
+    # Create ROI mask
+    roi_mask = np.zeros((roi_h, roi_w), dtype=np.uint8)
+    
+    # Adjust coordinates relative to ROI
+    rel_x = x - roi_x
+    rel_y = y - roi_y
+    
+    # Draw rounded rectangle directly on binary mask
+    if border_radius <= 0:
+        # Simple rectangle - much faster
+        roi_mask[rel_y:rel_y + h, rel_x:rel_x + w] = 255
+    else:
+        # Use RGB temp mask only for ROI (much smaller)
+        temp_rgb = np.zeros((roi_h, roi_w, 3), dtype=np.uint8)
+        draw_rounded_rectangle_mask(temp_rgb, rel_x, rel_y, w, h, border_radius, (255, 255, 255))
+        roi_mask = (np.sum(temp_rgb, axis=2) > 0).astype(np.uint8) * 255
+    
+    # Create full mask and place ROI
+    binary_mask = np.zeros((height, width), dtype=np.uint8)
+    binary_mask[roi_y:roi_y + roi_h, roi_x:roi_x + roi_w] = roi_mask
     
     return binary_mask
 
 
-def mask_to_coco_annotation(mask_image: np.ndarray, instance_id: int, 
-                           annotation_id: int, image_id: int, 
-                           metadata: dict) -> dict:
-    """Convert instance mask to COCO annotation format.
+def create_rle_for_rectangle(x: int, y: int, w: int, h: int, width: int, height: int) -> dict:
+    """Create RLE for a simple rectangle by creating minimal mask.
+    
+    Optimized: creates mask only for the rectangle area, not the full image.
     
     Args:
-        mask_image: RGB mask image (H, W, 3)
-        instance_id: Instance ID
+        x, y, w, h: Rectangle coordinates
+        width, height: Image dimensions
+        
+    Returns:
+        RLE dictionary with 'size' and 'counts'
+    """
+    # Create minimal binary mask only for the rectangle (much faster than full image)
+    # Create full-size mask but only fill the rectangle area
+    binary_mask = np.zeros((height, width), dtype=np.uint8)
+    binary_mask[y:y+h, x:x+w] = 1
+    
+    # Encode to RLE
+    rle = coco_mask.encode(np.asfortranarray(binary_mask))
+    rle['counts'] = rle['counts'].decode('utf-8')
+    
+    return rle
+
+
+def metadata_to_coco_annotation(frame_meta: dict, annotation_id: int, 
+                                image_id: int, width: int, height: int) -> dict:
+    """Convert frame metadata directly to COCO annotation format.
+    
+    Args:
+        frame_meta: Frame metadata dictionary
         annotation_id: Unique annotation ID
         image_id: Image ID
-        metadata: Metadata dictionary with frame info
+        width: Image width
+        height: Image height
         
     Returns:
         COCO annotation dictionary
     """
-    # Extract binary mask for this instance
-    binary_mask = extract_instance_from_mask(mask_image, instance_id)
+    # Get coordinates directly from metadata
+    x = float(frame_meta['x'])
+    y = float(frame_meta['y'])
+    w = float(frame_meta['w'])
+    h = float(frame_meta['h'])
+    border_radius = frame_meta.get('border_radius', 0)
     
-    if np.sum(binary_mask) == 0:
+    # Clamp to image bounds
+    x = max(0, min(x, width - 1))
+    y = max(0, min(y, height - 1))
+    w = min(w, width - x)
+    h = min(h, height - y)
+    
+    if w <= 0 or h <= 0:
         return None
     
-    # Find frame metadata
-    frame_meta = None
-    for frame in metadata['frames']:
-        if frame['id'] == instance_id:
-            frame_meta = frame
-            break
+    # Create RLE segmentation
+    if border_radius <= 0:
+        # Simple rectangle - create RLE directly without drawing mask
+        rle = create_rle_for_rectangle(int(x), int(y), int(w), int(h), width, height)
+        rle['counts'] = rle['counts'].decode('utf-8') if isinstance(rle['counts'], bytes) else rle['counts']
+    else:
+        # Rounded rectangle - need to draw mask for accurate RLE
+        binary_mask = create_binary_mask_from_metadata(frame_meta, width, height)
+        if not np.any(binary_mask):
+            return None
+        rle = coco_mask.encode(np.asfortranarray(binary_mask))
+        rle['counts'] = rle['counts'].decode('utf-8')
     
-    if frame_meta is None:
-        return None
+    # RLE size from pycocotools is [height, width] (numpy format)
+    # COCO format uses [width, height], so we need to convert
+    rle_height, rle_width = rle['size']
+    coco_size = [rle_width, rle_height]  # Convert to [width, height]
     
-    # Extract contours
-    contours, _ = cv2.findContours(binary_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    # Bounding box from metadata
+    bbox = [x, y, w, h]
     
-    if not contours:
-        return None
-    
-    # Use largest contour
-    largest_contour = max(contours, key=cv2.contourArea)
-    
-    # Simplify contour (but preserve rounded corners)
-    epsilon = 0.001 * cv2.arcLength(largest_contour, True)
-    simplified_contour = cv2.approxPolyDP(largest_contour, epsilon, True)
-    
-    # Convert to polygon format [x1, y1, x2, y2, ...]
-    polygon = []
-    for point in simplified_contour:
-        polygon.extend([float(point[0][0]), float(point[0][1])])
-    
-    # Convert to RLE format (more compact)
-    rle = coco_mask.encode(np.asfortranarray(binary_mask))
-    rle['counts'] = rle['counts'].decode('utf-8')
-    
-    # Compute bounding box
-    x, y, w, h = cv2.boundingRect(largest_contour)
-    bbox = [float(x), float(y), float(w), float(h)]
-    area = float(cv2.contourArea(largest_contour))
+    # Compute area
+    if border_radius <= 0:
+        area = w * h
+    else:
+        border_radius = min(border_radius, min(w, h) // 2)
+        if border_radius <= 0:
+            area = w * h
+        else:
+            area = w * h - 4 * border_radius * border_radius + np.pi * border_radius * border_radius
+            area = max(0, area)
     
     # Create annotation
     annotation = {
         'id': annotation_id,
         'image_id': image_id,
-        'category_id': 1,  # "frame" category
+        'category_id': 1,
         'segmentation': {
-            'size': [mask_image.shape[1], mask_image.shape[0]],
+            'size': coco_size,
             'counts': rle['counts']
         },
         'bbox': bbox,
@@ -124,35 +186,34 @@ def mask_to_coco_annotation(mask_image: np.ndarray, instance_id: int,
     return annotation
 
 
-def convert_to_coco(mask_dir: Path, meta_dir: Path, output_dir: Path, split: str = 'train'):
-    """Convert instance masks to COCO format.
+def convert_to_coco(meta_dir: Path, output_dir: Path, split: str = 'train'):
+    """Convert metadata directly to COCO format.
+    
+    Creates only JSON annotations file, no image copying.
     
     Args:
-        mask_dir: Directory with instance mask PNG files
         meta_dir: Directory with metadata JSON files
-        output_dir: Output directory for COCO dataset
+        output_dir: Output directory for COCO dataset (only JSON annotations)
         split: Dataset split ('train' or 'val')
     """
-    # Create output directories
+    # Create output directory only for annotations
     annotations_dir = output_dir / 'annotations'
-    images_dir = output_dir / split
     annotations_dir.mkdir(parents=True, exist_ok=True)
-    images_dir.mkdir(parents=True, exist_ok=True)
     
-    # Find all mask files
-    mask_files = sorted(mask_dir.glob('page_*_instance_mask.png'))
+    # Find all metadata files
+    meta_files = sorted(meta_dir.glob('page_*.json'))
     
-    if not mask_files:
-        print(f"No mask files found in {mask_dir}")
+    if not meta_files:
+        print(f"No metadata files found in {meta_dir}")
         return
     
     # Split into train/val (80/20)
     if split == 'train':
-        mask_files = mask_files[:int(len(mask_files) * 0.8)]
+        meta_files = meta_files[:int(len(meta_files) * 0.8)]
     else:
-        mask_files = mask_files[int(len(mask_files) * 0.8):]
+        meta_files = meta_files[int(len(meta_files) * 0.8):]
     
-    print(f"Processing {len(mask_files)} masks for {split} split...")
+    print(f"Processing {len(meta_files)} pages for {split} split...")
     
     # COCO data structures
     images = []
@@ -161,45 +222,29 @@ def convert_to_coco(mask_dir: Path, meta_dir: Path, output_dir: Path, split: str
     
     annotation_id = 1
     
-    for mask_path in tqdm(mask_files, desc=f"Converting {split}"):
+    for meta_path in tqdm(meta_files, desc=f"Converting {split}"):
         try:
-            # Extract page ID
-            page_id = int(mask_path.stem.replace('page_', '').replace('_instance_mask', ''))
-            
-            # Load mask
-            mask_image = cv2.imread(str(mask_path))
-            if mask_image is None:
-                continue
-            
-            mask_image = cv2.cvtColor(mask_image, cv2.COLOR_BGR2RGB)
-            height, width = mask_image.shape[:2]
-            
             # Load metadata
-            meta_path = meta_dir / f"page_{page_id}.json"
-            if not meta_path.exists():
-                continue
-            
             metadata = load_metadata(meta_path)
+            page_id = metadata['page_id']
             
-            # Add image entry
+            # Get image dimensions from metadata
+            width = metadata.get('page_width', 1920)
+            height = metadata.get('page_height', 1080)
+            
+            # Add image entry (images stay in original location, not copied)
             image_entry = {
                 'id': page_id,
-                'file_name': f"page_{page_id}.png",
+                'file_name': f"page_{page_id}.png",  # Relative path from COCO root
                 'width': width,
                 'height': height,
             }
             images.append(image_entry)
             
-            # Copy screenshot to COCO images directory
-            screenshot_path = Path('data/screenshots') / f"page_{page_id}.png"
-            if screenshot_path.exists():
-                shutil.copy(screenshot_path, images_dir / f"page_{page_id}.png")
-            
             # Process each frame in metadata
             for frame in metadata['frames']:
-                instance_id = frame['id']
-                annotation = mask_to_coco_annotation(
-                    mask_image, instance_id, annotation_id, page_id, metadata
+                annotation = metadata_to_coco_annotation(
+                    frame, annotation_id, page_id, width, height
                 )
                 
                 if annotation:
@@ -207,7 +252,7 @@ def convert_to_coco(mask_dir: Path, meta_dir: Path, output_dir: Path, split: str
                     annotation_id += 1
         
         except Exception as e:
-            print(f"Error processing {mask_path}: {e}")
+            print(f"Error processing {meta_path}: {e}")
             continue
     
     # Create COCO JSON
@@ -229,24 +274,22 @@ def convert_to_coco(mask_dir: Path, meta_dir: Path, output_dir: Path, split: str
 
 
 def main():
-    parser = argparse.ArgumentParser(description='Convert instance masks to COCO format')
-    parser.add_argument('--mask-dir', type=str, default='data/masks', help='Directory with instance mask PNG files')
+    parser = argparse.ArgumentParser(description='Convert metadata to COCO format')
     parser.add_argument('--meta-dir', type=str, default='data/meta', help='Directory with metadata JSON files')
-    parser.add_argument('--output-dir', type=str, default='data/coco', help='Output directory for COCO dataset')
+    parser.add_argument('--output-dir', type=str, default='data/coco', help='Output directory for COCO dataset (only JSON annotations)')
     parser.add_argument('--split', type=str, default='train', choices=['train', 'val'], help='Dataset split')
     
     args = parser.parse_args()
     
-    mask_dir = Path(args.mask_dir)
     meta_dir = Path(args.meta_dir)
     output_dir = Path(args.output_dir)
     
     # Convert both splits
     print("Converting train split...")
-    convert_to_coco(mask_dir, meta_dir, output_dir, 'train')
+    convert_to_coco(meta_dir, output_dir, 'train')
     
     print("\nConverting val split...")
-    convert_to_coco(mask_dir, meta_dir, output_dir, 'val')
+    convert_to_coco(meta_dir, output_dir, 'val')
     
     print("\nDone! COCO dataset created.")
 
