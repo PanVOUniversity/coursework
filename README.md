@@ -238,8 +238,7 @@ python detectron/infer_and_postprocess.py --weights outputs/model_final.pth --in
 ```json
 {
   "page_id": int,                    // ID страницы
-  "page_width": int,                 // Заданная ширина страницы
-  "actual_page_width": int,          // Фактическая ширина (может быть больше из-за контента)
+  "page_width": int,                 // Ширина viewport, использованная при рендеринге
   "page_height": int,                // Высота страницы
   "header": {                         // Конфигурация header (опционально)
     "id": "header",
@@ -287,10 +286,10 @@ python detectron/infer_and_postprocess.py --weights outputs/model_final.pth --in
 }
 ```
 
-**Примечания:**
+**Примечания:	**
 
 - Все координаты и размеры указаны в пикселях
-- `page_width` и `actual_page_width` могут отличаться, если контент выходит за границы заданной ширины
+- `page_width` соответствует размеру viewport, использованному при рендеринге скриншота
 - Фреймы имеют координаты относительно начала страницы, но с учетом высоты header (y-координата сдвинута на высоту header)
 - `z_index` фреймов ограничен диапазоном 1-999 (header и footer имеют z-index 1000)
 - `border_radius` может быть 0 (прямоугольник) или положительным числом (скругленные углы)

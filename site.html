@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>site</title>
+  
+    <style>
+      html, body {
+        margin: 0; padding: 0; height: 100%; box-sizing: border-box; font-family: Arial, sans-serif;
+      }
+      .section {
+        width: 100vw; min-height: 100vh; position: relative; z-index: 1;
+        display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
+        font-size: 2rem; scroll-snap-align: start; transition: background .3s; padding: 2rem;
+      }
+      .s1 { background: hsl(0, 50%, 92%); }
+.s2 { background: hsl(60, 50%, 92%); }
+.s3 { background: hsl(120, 50%, 92%); }
+.s4 { background: hsl(180, 50%, 92%); }
+.s5 { background: hsl(240, 50%, 92%); }
+      .block {
+        box-shadow: 0 2px 8px #8886;
+        border-radius: 1vw;
+        background: #fff;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: flex-start;
+        padding: 1vw;
+        margin: 1rem 0;
+        overflow: hidden;
+        width: auto;
+        max-width: 60vw;
+      }
+      .block p {
+        margin: 1vw 0 0 0;
+        font-size: 1.1rem;
+        text-align: center;
+      }
+      body {
+        scroll-snap-type: y mandatory;
+        overflow-y: scroll;
+        height: 100vh;
+      }
+    </style>
+    
+</head>
+<body>
+  <section class="section s1">Hero секция<div class="block" style="width:26vw; height:23vh; position:absolute; top:33vh; left:5vw;"><p>Lorem ipsum dolor sit amet.</p></div>
+<div class="block" style="width:43vw; height:14vh; position:absolute; top:17vh; left:11vw;"><p>Phasellus placerat enim.</p></div>
+<div class="block" style="width:11vw; height:19vh; position:absolute; top:39vh; left:64vw;"><p>Lorem ipsum dolor sit amet.</p></div>
+<div class="block" style="width:43vw; height:47vh; position:absolute; top:44vh; left:42vw;"><p>Maecenas non leo.</p></div>
+<div class="block" style="width:46vw; height:13vh; position:absolute; top:25vh; left:37vw;"><p>Consectetur adipiscing elit.</p></div>
+<div class="block" style="width:19vw; height:17vh; position:absolute; top:82vh; left:51vw;"><img src="https://picsum.photos/seed/2784/200/300" alt="random" style="width:100%; height:60%;"><p>Vestibulum vitae.</p></div>
+<div class="block" style="width:21vw; height:15vh; position:absolute; top:67vh; left:18vw;"><img src="https://picsum.photos/seed/2178/200/300" alt="random" style="width:100%; height:60%;"><p>Phasellus placerat enim.</p></div>
+<div class="block" style="width:20vw; height:12vh; position:absolute; top:80vh; left:6vw;"><img src="https://picsum.photos/seed/9635/200/300" alt="random" style="width:100%; height:60%;"><p>Porttitor mattis sapien.</p></div>
+<div class="block" style="width:14vw; height:10vh; position:absolute; top:90vh; left:84vw;"><p>Porttitor mattis sapien.</p></div>
+<div class="block" style="width:20vw; height:12vh; position:absolute; top:4vh; left:54vw;"><p>Lorem ipsum dolor sit amet.</p></div></section><section class="section s2">About секция<div class="block" style="width:32vw; height:43vh; position:absolute; top:27vh; left:61vw;"><img src="https://picsum.photos/seed/7239/200/300" alt="random" style="width:100%; height:60%;"><p>Nulla facilisi.</p></div>
+<div class="block" style="width:15vw; height:35vh; position:absolute; top:21vh; left:21vw;"><p>Lorem ipsum dolor sit amet.</p></div>
+<div class="block" style="width:21vw; height:10vh; position:absolute; top:51vh; left:6vw;"><p>Morbi nec metus.</p></div>
+<div class="block" style="width:34vw; height:12vh; position:absolute; top:63vh; left:49vw;"><img src="https://loremflickr.com/320/240/landscape?lock=6841" alt="random" style="width:100%; height:60%;"><p>Vestibulum vitae.</p></div>
+<div class="block" style="width:44vw; height:19vh; position:absolute; top:79vh; left:53vw;"><img src="https://picsum.photos/seed/6264/200/300" alt="random" style="width:100%; height:60%;"><p>Phasellus placerat enim.</p></div>
+<div class="block" style="width:13vw; height:34vh; position:absolute; top:24vh; left:40vw;"><img src="https://picsum.photos/seed/9595/200/300" alt="random" style="width:100%; height:60%;"><p>Nulla facilisi.</p></div>
+<div class="block" style="width:17vw; height:25vh; position:absolute; top:61vh; left:13vw;"><img src="https://picsum.photos/seed/1818/200/300" alt="random" style="width:100%; height:60%;"><p>Porttitor mattis sapien.</p></div>
+<div class="block" style="width:44vw; height:17vh; position:absolute; top:1vh; left:9vw;"><p>Nulla facilisi.</p></div>
+<div class="block" style="width:16vw; height:12vh; position:absolute; top:43vh; left:82vw;"><img src="https://loremflickr.com/320/240/landscape?lock=1098" alt="random" style="width:100%; height:60%;"><p>Porttitor mattis sapien.</p></div>
+<div class="block" style="width:17vw; height:10vh; position:absolute; top:42vh; left:56vw;"><img src="https://picsum.photos/seed/51/200/300" alt="random" style="width:100%; height:60%;"><p>Morbi nec metus.</p></div></section><section class="section s3">Features секция<div class="block" style="width:25vw; height:37vh; position:absolute; top:47vh; left:21vw;"><img src="https://picsum.photos/seed/3833/200/300" alt="random" style="width:100%; height:60%;"><p>Nulla facilisi.</p></div>
+<div class="block" style="width:35vw; height:32vh; position:absolute; top:12vh; left:28vw;"><p>Morbi nec metus.</p></div>
+<div class="block" style="width:34vw; height:16vh; position:absolute; top:84vh; left:22vw;"><p>Vestibulum vitae.</p></div>
+<div class="block" style="width:44vw; height:15vh; position:absolute; top:39vh; left:50vw;"><img src="https://loremflickr.com/320/240/landscape?lock=3178" alt="random" style="width:100%; height:60%;"><p>Consectetur adipiscing elit.</p></div>
+<div class="block" style="width:38vw; height:10vh; position:absolute; top:65vh; left:49vw;"><p>Maecenas non leo.</p></div>
+<div class="block" style="width:39vw; height:18vh; position:absolute; top:6vh; left:58vw;"><p>Porttitor mattis sapien.</p></div>
+<div class="block" style="width:12vw; height:14vh; position:absolute; top:39vh; left:8vw;"><p>Porttitor mattis sapien.</p></div>
+<div class="block" style="width:11vw; height:46vh; position:absolute; top:29vh; left:0vw;"><p>Vestibulum vitae.</p></div>
+<div class="block" style="width:19vw; height:21vh; position:absolute; top:14vh; left:6vw;"><img src="https://loremflickr.com/320/240/landscape?lock=3524" alt="random" style="width:100%; height:60%;"><p>Maecenas non leo.</p></div>
+<div class="block" style="width:38vw; height:11vh; position:absolute; top:89vh; left:58vw;"><p>Lorem ipsum dolor sit amet.</p></div></section><section class="section s4">Contact секция<div class="block" style="width:45vw; height:19vh; position:absolute; top:64vh; left:40vw;"><img src="https://loremflickr.com/320/240/landscape?lock=3524" alt="random" style="width:100%; height:60%;"><p>Maecenas non leo.</p></div>
+<div class="block" style="width:36vw; height:31vh; position:absolute; top:27vh; left:10vw;"><img src="https://picsum.photos/seed/1194/200/300" alt="random" style="width:100%; height:60%;"><p>Lorem ipsum dolor sit amet.</p></div>
+<div class="block" style="width:47vw; height:10vh; position:absolute; top:24vh; left:26vw;"><img src="https://picsum.photos/seed/2493/200/300" alt="random" style="width:100%; height:60%;"><p>Maecenas non leo.</p></div>
+<div class="block" style="width:36vw; height:13vh; position:absolute; top:85vh; left:23vw;"><img src="https://loremflickr.com/320/240/landscape?lock=4160" alt="random" style="width:100%; height:60%;"><p>Vestibulum vitae.</p></div>
+<div class="block" style="width:31vw; height:10vh; position:absolute; top:2vh; left:10vw;"><img src="https://loremflickr.com/320/240/landscape?lock=8901" alt="random" style="width:100%; height:60%;"><p>Maecenas non leo.</p></div>
+<div class="block" style="width:14vw; height:10vh; position:absolute; top:30vh; left:81vw;"><p>Phasellus placerat enim.</p></div>
+<div class="block" style="width:21vw; height:25vh; position:absolute; top:61vh; left:9vw;"><p>Consectetur adipiscing elit.</p></div>
+<div class="block" style="width:10vw; height:16vh; position:absolute; top:45vh; left:69vw;"><p>Maecenas non leo.</p></div>
+<div class="block" style="width:26vw; height:16vh; position:absolute; top:15vh; left:4vw;"><p>Phasellus placerat enim.</p></div>
+<div class="block" style="width:10vw; height:32vh; position:absolute; top:32vh; left:47vw;"><p>Vestibulum vitae.</p></div></section><section class="section s5">Footer секция<div class="block" style="width:20vw; height:27vh; position:absolute; top:51vh; left:76vw;"><img src="https://picsum.photos/seed/6411/200/300" alt="random" style="width:100%; height:60%;"><p>Nulla facilisi.</p></div>
+<div class="block" style="width:11vw; height:30vh; position:absolute; top:28vh; left:65vw;"><img src="https://picsum.photos/seed/619/200/300" alt="random" style="width:100%; height:60%;"><p>Maecenas non leo.</p></div>
+<div class="block" style="width:11vw; height:20vh; position:absolute; top:9vh; left:50vw;"><p>Porttitor mattis sapien.</p></div>
+<div class="block" style="width:31vw; height:17vh; position:absolute; top:75vh; left:27vw;"><p>Maecenas non leo.</p></div>
+<div class="block" style="width:21vw; height:48vh; position:absolute; top:44vh; left:11vw;"><img src="https://picsum.photos/seed/5542/200/300" alt="random" style="width:100%; height:60%;"><p>Vestibulum vitae.</p></div>
+<div class="block" style="width:31vw; height:21vh; position:absolute; top:57vh; left:41vw;"><img src="https://picsum.photos/seed/7068/200/300" alt="random" style="width:100%; height:60%;"><p>Nulla facilisi.</p></div>
+<div class="block" style="width:25vw; height:38vh; position:absolute; top:23vh; left:25vw;"><p>Porttitor mattis sapien.</p></div>
+<div class="block" style="width:23vw; height:23vh; position:absolute; top:13vh; left:12vw;"><p>Nulla facilisi.</p></div>
+<div class="block" style="width:17vw; height:24vh; position:absolute; top:7vh; left:80vw;"><img src="https://loremflickr.com/320/240/landscape?lock=5320" alt="random" style="width:100%; height:60%;"><p>Maecenas non leo.</p></div>
+<div class="block" style="width:10vw; height:37vh; position:absolute; top:11vh; left:3vw;"><img src="https://loremflickr.com/320/240/landscape?lock=68" alt="random" style="width:100%; height:60%;"><p>Phasellus placerat enim.</p></div></section>
+</body>
+</html>
