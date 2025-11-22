@@ -3,6 +3,7 @@
 
 ARG CUDA_VERSION=11.8.0
 FROM pytorch/pytorch:2.0.1-cuda${CUDA_VERSION}-cudnn8-runtime
+ENV DEBIAN_FRONTEND=noninteractive
 
 WORKDIR /app
 
@@ -23,7 +24,7 @@ RUN apt-get update && apt-get install -y \
 # Install Python dependencies (excluding torch/torchvision - already in base image)
 COPY requirements.txt .
 RUN pip install -r requirements.txt
-RUN playwright install chromium
+
 
 # Install Playwright and Chromium
 RUN playwright install chromium && \
@@ -32,7 +33,7 @@ RUN playwright install chromium && \
 # Install Detectron2 from source (most reliable for GPU)
 RUN git clone https://github.com/facebookresearch/detectron2.git /tmp/detectron2 && \
     cd /tmp/detectron2 && \
-    pip install --no-cache-dir -e . && \
+    pip install -e . && \
     cd /app && \
     rm -rf /tmp/detectron2
 
