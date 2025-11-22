@@ -150,10 +150,8 @@ def metadata_to_coco_annotation(frame_meta: dict, annotation_id: int,
         rle = coco_mask.encode(np.asfortranarray(binary_mask))
         rle['counts'] = rle['counts'].decode('utf-8')
     
-    # RLE size from pycocotools is [height, width] (numpy format)
-    # COCO format uses [width, height], so we need to convert
-    rle_height, rle_width = rle['size']
-    coco_size = [rle_width, rle_height]  # Convert to [width, height]
+    # RLE size from pycocotools already follows [height, width]
+    coco_size = rle['size']
     
     # Bounding box from metadata
     bbox = [x, y, w, h]
