@@ -47,6 +47,19 @@ def _meshgrid_with_indexing(*tensors, **kwargs):
 
 torch.meshgrid = _meshgrid_with_indexing
 
+# Ensure torch.from_numpy always receives writable arrays
+_original_from_numpy = torch.from_numpy
+
+
+def _from_numpy_writable(array):
+    if isinstance(array, np.ndarray) and not array.flags.writeable:
+        array = np.array(array, copy=True, order='C')
+        array.flags.writeable = True
+    return _original_from_numpy(array)
+
+
+torch.from_numpy = _from_numpy_writable
+
 # Align with new torch.fx API to avoid compatibility warnings
 if fx_symbolic_trace and hasattr(fx_symbolic_trace, "is_fx_tracing_symbolic_tracing"):
     fx_symbolic_trace.is_fx_tracing = fx_symbolic_trace.is_fx_tracing_symbolic_tracing
