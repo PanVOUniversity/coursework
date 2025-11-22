@@ -86,6 +86,7 @@ def main():
     
     # Setup config
     cfg = get_cfg()
+    cfg.INPUT.MASK_FORMAT = 'bitmask'
     cfg.merge_from_file(model_zoo.get_config_file(args.config))
     cfg.MODEL.WEIGHTS = model_zoo.get_checkpoint_url(args.config)
     
