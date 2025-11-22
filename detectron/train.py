@@ -27,8 +27,9 @@ _original_decode = mask_utils.decode
 
 def _decode_writable(rle):
     decoded = _original_decode(rle)
-    if isinstance(decoded, np.ndarray) and not decoded.flags.writeable:
-        decoded = np.array(decoded, copy=True)
+    if isinstance(decoded, np.ndarray):
+        decoded = np.array(decoded, copy=True, order='C')
+        decoded.flags.writeable = True
     return decoded
 
 
