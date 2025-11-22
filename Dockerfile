@@ -40,7 +40,7 @@ RUN playwright install
 # Install Detectron2 from source (most reliable for GPU)
 RUN git clone https://github.com/facebookresearch/detectron2.git /tmp/detectron2 && \
     cd /tmp/detectron2 && \
-    pip install -e . && \
+    pip install . && \
     cd /app && \
     rm -rf /tmp/detectron2
 
