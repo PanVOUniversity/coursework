@@ -6,6 +6,7 @@ Registers synthetic frames dataset and trains Mask R-CNN model.
 import argparse
 from pathlib import Path
 
+import numpy as np
 import torch
 from detectron2.data import DatasetCatalog, MetadataCatalog
 from detectron2.data.datasets import load_coco_json
@@ -13,6 +14,41 @@ from detectron2.config import get_cfg
 from detectron2 import model_zoo
 from detectron2.engine import DefaultTrainer
 from detectron2.utils.logger import setup_logger
+from pycocotools import mask as mask_utils
+
+try:
+    from torch.fx import _symbolic_trace as fx_symbolic_trace
+except ImportError:  # pragma: no cover
+    fx_symbolic_trace = None
+
+# Ensure RLE decodes produce writable arrays to avoid PyTorch warnings
+_original_decode = mask_utils.decode
+
+
+def _decode_writable(rle):
+    decoded = _original_decode(rle)
+    if isinstance(decoded, np.ndarray) and not decoded.flags.writeable:
+        decoded = np.array(decoded, copy=True)
+    return decoded
+
+
+mask_utils.decode = _decode_writable
+
+# Provide default indexing argument for torch.meshgrid to avoid deprecation warning
+_original_meshgrid = torch.meshgrid
+
+
+def _meshgrid_with_indexing(*tensors, **kwargs):
+    if "indexing" not in kwargs:
+        kwargs["indexing"] = "ij"
+    return _original_meshgrid(*tensors, **kwargs)
+
+
+torch.meshgrid = _meshgrid_with_indexing
+
+# Align with new torch.fx API to avoid compatibility warnings
+if fx_symbolic_trace and hasattr(fx_symbolic_trace, "is_fx_tracing_symbolic_tracing"):
+    fx_symbolic_trace.is_fx_tracing = fx_symbolic_trace.is_fx_tracing_symbolic_tracing
 
 
 def register_dataset(coco_dir: Path, split: str = 'train'):
