@@ -18,6 +18,7 @@ RUN set -eux; \
 RUN apt-get update && apt-get install -y \
     git \
     wget \
+    build-essential \
     libgl1-mesa-glx \
     libglib2.0-0 \
     libsm6 \
