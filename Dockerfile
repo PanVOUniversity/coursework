@@ -1,7 +1,7 @@
 # Dockerfile for frame segmentation pipeline (GPU optimized)
 # Build: docker build --build-arg CUDA_VERSION=11.8.0 -t frame-seg:gpu .
 
-ARG CUDA_VERSION=11.8.0
+ARG CUDA_VERSION=11.8
 FROM pytorch/pytorch:2.0.1-cuda${CUDA_VERSION}-cudnn8-runtime
 ENV DEBIAN_FRONTEND=noninteractive
 
@@ -29,7 +29,7 @@ RUN pip install -r requirements.txt
 # Install Playwright and Chromium
 RUN playwright install chromium && \
     playwright install-deps chromium && \
-    playwright install
+    playwright install-deps firefox
 
 # Install Detectron2 from source (most reliable for GPU)
 RUN git clone https://github.com/facebookresearch/detectron2.git /tmp/detectron2 && \
