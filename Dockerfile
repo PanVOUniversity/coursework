@@ -6,6 +6,17 @@ ENV DEBIAN_FRONTEND=noninteractive
 
 WORKDIR /app
 
+# Refresh Ubuntu keyring (Jammy base images ship old keys that make apt fail)
+RUN set -eux; \
+    python3 - <<'PY' && \
+    dpkg -i /tmp/ubuntu-keyring.deb && \
+    rm /tmp/ubuntu-keyring.deb && \
+    sed -i 's|http://|https://|g' /etc/apt/sources.list
+import urllib.request
+url = "https://mirrors.edge.kernel.org/ubuntu/pool/main/u/ubuntu-keyring/ubuntu-keyring_2023.11.16.1_all.deb"
+urllib.request.urlretrieve(url, "/tmp/ubuntu-keyring.deb")
+PY
+
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
     git \
