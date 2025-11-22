@@ -28,7 +28,8 @@ RUN pip install -r requirements.txt
 
 # Install Playwright and Chromium
 RUN playwright install chromium && \
-    playwright install-deps chromium
+    playwright install-deps chromium && \
+    playwright install
 
 # Install Detectron2 from source (most reliable for GPU)
 RUN git clone https://github.com/facebookresearch/detectron2.git /tmp/detectron2 && \
