@@ -5,6 +5,7 @@ Builds COCO annotations directly from metadata (like masks are built).
 
 import argparse
 import json
+import shutil
 import numpy as np
 from pathlib import Path
 from pycocotools import mask as coco_mask
@@ -231,7 +232,8 @@ def process_single_metadata_file(meta_path: Path) -> tuple:
         return (None, [], str(e))
 
 
-def convert_to_coco(meta_dir: Path, output_dir: Path, split: str = 'train', num_workers: int = None):
+def convert_to_coco(meta_dir: Path, images_source_dir: Path, output_dir: Path,
+                    split: str = 'train', num_workers: int = None):
     """Convert metadata directly to COCO format.
     
     Creates only JSON annotations file, no image copying.
@@ -245,6 +247,11 @@ def convert_to_coco(meta_dir: Path, output_dir: Path, split: str = 'train', num_
     # Create output directory only for annotations
     annotations_dir = output_dir / 'annotations'
     annotations_dir.mkdir(parents=True, exist_ok=True)
+
+    images_dir = output_dir / split
+    if images_dir.exists():
+        shutil.rmtree(images_dir)
+    images_dir.mkdir(parents=True, exist_ok=True)
     
     # Find all metadata files
     meta_files = sorted(meta_dir.glob('page_*.json'))
@@ -314,16 +321,31 @@ def convert_to_coco(meta_dir: Path, output_dir: Path, split: str = 'train', num_
     with open(output_json, 'w', encoding='utf-8') as f:
         json.dump(coco_data, f, indent=2)
     
+    missing_images = 0
+    copied_images = 0
+    for image_entry in images:
+        image_filename = image_entry['file_name']
+        source_path = images_source_dir / image_filename
+        target_path = images_dir / image_filename
+        if not source_path.exists():
+            missing_images += 1
+            continue
+        shutil.copy2(source_path, target_path)
+        copied_images += 1
+
     print(f"Done! Created COCO dataset:")
-    print(f"  - Images: {len(images)}")
+    print(f"  - Images: {len(images)} (copied {copied_images}, missing {missing_images})")
     print(f"  - Annotations: {len(annotations)}")
     print(f"  - JSON: {output_json}")
+    if missing_images:
+        print("Warning: Some images were missing in screenshots directory. Training may fail.")
 
 
 def main():
     parser = argparse.ArgumentParser(description='Convert metadata to COCO format')
     parser.add_argument('--meta-dir', type=str, default='data/meta', help='Directory with metadata JSON files')
-    parser.add_argument('--output-dir', type=str, default='data/coco', help='Output directory for COCO dataset (only JSON annotations)')
+    parser.add_argument('--output-dir', type=str, default='data/coco', help='Output directory for COCO dataset (images + annotations)')
+    parser.add_argument('--screenshots-dir', type=str, default='data/screenshots', help='Directory with rendered page PNGs')
     parser.add_argument('--split', type=str, default='train', choices=['train', 'val'], help='Dataset split')
     parser.add_argument('--num-workers', type=int, default=None, help='Number of parallel workers (default: CPU count)')
     
@@ -331,13 +353,14 @@ def main():
     
     meta_dir = Path(args.meta_dir)
     output_dir = Path(args.output_dir)
+    screenshots_dir = Path(args.screenshots_dir)
     
     # Convert both splits
     print("Converting train split...")
-    convert_to_coco(meta_dir, output_dir, 'train', args.num_workers)
+    convert_to_coco(meta_dir, screenshots_dir, output_dir, 'train', args.num_workers)
     
     print("\nConverting val split...")
-    convert_to_coco(meta_dir, output_dir, 'val', args.num_workers)
+    convert_to_coco(meta_dir, screenshots_dir, output_dir, 'val', args.num_workers)
     
     print("\nDone! COCO dataset created.")
 
