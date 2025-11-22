@@ -2,7 +2,7 @@
 # Build: docker build --build-arg CUDA_VERSION=11.8.0 -t frame-seg:gpu .
 
 ARG CUDA_VERSION=11.8
-FROM pytorch/pytorch:2.0.1-cuda${CUDA_VERSION}-cudnn8-runtime
+FROM pytorch/pytorch:2.9.1-cuda12.6-cudnn9-runtime
 ENV DEBIAN_FRONTEND=noninteractive
 
 WORKDIR /app
