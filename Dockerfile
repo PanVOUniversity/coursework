@@ -1,11 +1,9 @@
-# Dockerfile for frame segmentation pipeline
-# Supports both CPU and GPU (CUDA) versions
+# Dockerfile for frame segmentation pipeline (GPU optimized)
+# Build: docker build --build-arg CUDA_VERSION=11.8.0 -t frame-seg:gpu .
 
-# Base image - use CUDA version for GPU support
-ARG BASE_IMAGE=python:3.10-slim
-FROM ${BASE_IMAGE}
+ARG CUDA_VERSION=11.8.0
+FROM pytorch/pytorch:2.0.1-cuda${CUDA_VERSION}-cudnn8-runtime
 
-# Set working directory
 WORKDIR /app
 
 # Install system dependencies
@@ -18,35 +16,25 @@ RUN apt-get update && apt-get install -y \
     libxext6 \
     libxrender-dev \
     libgomp1 \
+    ninja-build \
     && rm -rf /var/lib/apt/lists/*
 
-# Install PyTorch first (required for Detectron2)
-ARG CUDA=0
-RUN if [ "$CUDA" = "1" ]; then \
-        pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118; \
-    else \
-        pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu; \
-    fi
 
-# Install Python dependencies (excluding torch/torchvision as they're installed above)
+# Install Python dependencies (excluding torch/torchvision - already in base image)
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt || true
+RUN pip install -r requirements.txt
+RUN playwright install chromium
 
 # Install Playwright and Chromium
-RUN playwright install chromium
-RUN playwright install-deps chromium
+RUN playwright install chromium && \
+    playwright install-deps chromium
 
-# Install Detectron2
-# For GPU version, use: docker build --build-arg CUDA=1 -t frame-seg .
-# For CPU version, use: docker build -t frame-seg .
-ARG CUDA=0
-RUN if [ "$CUDA" = "1" ]; then \
-        pip install 'git+https://github.com/facebookresearch/detectron2.git'; \
-    else \
-        pip install 'git+https://github.com/facebookresearch/detectron2.git' || \
-        pip install detectron2 -f https://dl.fbaipublicfiles.com/detectron2/wheels/cpu/torch2.0/index.html || \
-        pip install detectron2 -f https://dl.fbaipublicfiles.com/detectron2/wheels/cpu/torch1.13/index.html; \
-    fi
+# Install Detectron2 from source (most reliable for GPU)
+RUN git clone https://github.com/facebookresearch/detectron2.git /tmp/detectron2 && \
+    cd /tmp/detectron2 && \
+    pip install --no-cache-dir -e . && \
+    cd /app && \
+    rm -rf /tmp/detectron2
 
 # Copy application code
 COPY . .
@@ -55,6 +43,4 @@ COPY . .
 ENV PYTHONPATH=/app
 ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
 
-# Default command
-CMD ["python", "scripts/html_generator.py", "--n", "10"]
 

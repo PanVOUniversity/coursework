@@ -4,8 +4,6 @@ Registers synthetic frames dataset and trains Mask R-CNN model.
 """
 
 import argparse
-import os
-import json
 from pathlib import Path
 
 import torch
@@ -27,12 +25,19 @@ def register_dataset(coco_dir: Path, split: str = 'train'):
     json_file = coco_dir / 'annotations' / f'instances_{split}.json'
     image_root = coco_dir / split
     
+    # Check if files exist
+    if not json_file.exists():
+        raise FileNotFoundError(f"COCO annotation file not found: {json_file}")
+    if not image_root.exists():
+        raise FileNotFoundError(f"Image directory not found: {image_root}")
+    
     dataset_name = f"synthetic_frames_{split}"
     
-    DatasetCatalog.register(
-        dataset_name,
-        lambda: load_coco_json(str(json_file), str(image_root), dataset_name)
-    )
+    # Use closure to properly capture variables
+    def dataset_func():
+        return load_coco_json(str(json_file), str(image_root), dataset_name)
+    
+    DatasetCatalog.register(dataset_name, dataset_func)
     
     MetadataCatalog.get(dataset_name).set(
         thing_classes=['frame'],
@@ -51,7 +56,7 @@ def main():
     parser.add_argument('--config', type=str, default='COCO-InstanceSegmentation/mask_rcnn_R_50_FPN_3x.yaml', 
                        help='Config file name')
     parser.add_argument('--epochs', type=int, default=100, help='Number of training epochs')
-    parser.add_argument('--batch-size', type=int, default=2, help='Batch size')
+    parser.add_argument('--batch-size', type=int, default=8, help='Batch size (optimized for Tesla T4 16GB)')
     parser.add_argument('--gpu', action='store_true', help='Use GPU')
     parser.add_argument('--resume', action='store_true', help='Resume from checkpoint')
     
@@ -66,8 +71,18 @@ def main():
     
     # Register datasets
     print("Registering datasets...")
-    train_dataset = register_dataset(coco_dir, 'train')
-    val_dataset = register_dataset(coco_dir, 'val')
+    try:
+        train_dataset = register_dataset(coco_dir, 'train')
+        val_dataset = register_dataset(coco_dir, 'val')
+    except FileNotFoundError as e:
+        print(f"Error: {e}")
+        print("Make sure you have run coco_converter.py first to create COCO dataset.")
+        return
+    
+    # Get dataset size for proper MAX_ITER calculation
+    train_data = DatasetCatalog.get(train_dataset)
+    num_train_images = len(train_data)
+    print(f"Training images: {num_train_images}")
     
     # Setup config
     cfg = get_cfg()
@@ -82,8 +97,13 @@ def main():
     
     # Training parameters
     cfg.SOLVER.IMS_PER_BATCH = args.batch_size
-    cfg.SOLVER.MAX_ITER = args.epochs * 1000  # Approximate epochs
-    cfg.SOLVER.BASE_LR = 0.00025
+    
+    # Calculate MAX_ITER properly: iterations per epoch * number of epochs
+    # One epoch = dataset_size / batch_size iterations
+    iterations_per_epoch = max(1, num_train_images // args.batch_size)
+    cfg.SOLVER.MAX_ITER = iterations_per_epoch * args.epochs
+    
+    cfg.SOLVER.BASE_LR = 0.01  # Calculated as 0.02 * (batch_size / 16) for batch_size=8
     cfg.SOLVER.MOMENTUM = 0.9
     cfg.SOLVER.WEIGHT_DECAY = 0.0001
     cfg.SOLVER.GAMMA = 0.1
@@ -100,12 +120,18 @@ def main():
         cfg.MODEL.DEVICE = 'cpu'
         print("Using CPU")
     
+    print(f"Training configuration:")
+    print(f"  - Epochs: {args.epochs}")
+    print(f"  - Batch size: {args.batch_size}")
+    print(f"  - Iterations per epoch: {iterations_per_epoch}")
+    print(f"  - Total iterations (MAX_ITER): {cfg.SOLVER.MAX_ITER}")
+    
     # Create trainer
     trainer = DefaultTrainer(cfg)
     trainer.resume_or_load(resume=args.resume)
     
     # Train
-    print(f"Starting training for {args.epochs} epochs...")
+    print(f"Starting training...")
     print(f"Output directory: {output_dir}")
     trainer.train()
     

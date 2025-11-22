@@ -18,7 +18,7 @@ def id_to_color(instance_id: int) -> tuple[int, int, int]:
         return (0, 0, 0)  # Background
     
     # Map ID to color using bit manipulation
-    # id=1 -> (1,0,0), id=2 -> (0,1,0), id=3 -> (0,0,1), id=4 -> (1,1,0), etc.
+    # id=1 -> (255,0,0), id=2 -> (0,255,0), id=3 -> (0,0,255), id=4 -> (255,255,0), etc.
     r = ((instance_id - 1) & 1) * 255
     g = (((instance_id - 1) >> 1) & 1) * 255
     b = (((instance_id - 1) >> 2) & 1) * 255
@@ -29,9 +29,10 @@ def id_to_color(instance_id: int) -> tuple[int, int, int]:
         r = ((instance_id * 17) % 256)
         g = ((instance_id * 31) % 256)
         b = ((instance_id * 47) % 256)
-        # Ensure not black (background)
-        if r == 0 and g == 0 and b == 0:
-            r = 1
+    
+    # Ensure not black (background) for ALL IDs >= 1
+    if r == 0 and g == 0 and b == 0:
+        r = 255  # Use bright red for ID=1 instead of almost-black
     
     return (r, g, b)
 
@@ -52,7 +53,7 @@ def color_to_id(r: int, g: int, b: int) -> int:
     
     # Try to reverse the simple mapping first
     if r == 255 and g == 0 and b == 0:
-        return 1
+        return 1  # ID=1 is now (255,0,0) - bright red
     if r == 0 and g == 255 and b == 0:
         return 2
     if r == 0 and g == 0 and b == 255:

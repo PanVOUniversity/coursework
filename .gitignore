@@ -25,6 +25,9 @@ outputs/
 *.swp
 *.swo
 
+#ssh
+ssh_keys/
+
 # Environment
 venv/
 env/

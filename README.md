@@ -9,7 +9,7 @@ frame-segmentation/
 ├── README.md                    # Инструкции по запуску
 ├── requirements.txt             # Python зависимости
 ├── Dockerfile                   # Docker образ с GPU/CPU поддержкой
-├── scripts/
+├── data-generation/
 │   ├── html_generator.py        # Генератор HTML страниц с фреймами
 │   ├── playwright_render.py     # Скриншоты через Playwright
 │   ├── make_masks.py            # Генерация instance-масок
@@ -183,7 +183,7 @@ docker run --gpus all -v $(pwd)/data:/app/data -v $(pwd)/outputs:/app/outputs fr
 
 ```bash
 # Стандартный размер
-python scripts/html_generator.py --n 100 --min-frames 3 --max-frames 10
+python data-generation/html_generator.py --n 100 --min-frames 3 --max-frames 10
 
 ```
 
@@ -191,10 +191,10 @@ python scripts/html_generator.py --n 100 --min-frames 3 --max-frames 10
 
 ```bash
 # Viewport автоматически читается из метаданных (page_width, page_height)
-python scripts/playwright_render.py --input-dir data/pages --output-dir data/screenshots --workers 1
+python data-generation/playwright_render.py --input-dir data/pages --output-dir data/screenshots --workers 1
 
 # Если метаданных нет, можно задать дефолтный viewport
-python scripts/playwright_render.py --viewport-width 2560 --viewport-height 1440
+python data-generation/playwright_render.py --viewport-width 2560 --viewport-height 1440
 ```
 
 3. **Генерация масок:**
@@ -206,7 +206,7 @@ python scripts/playwright_render.py --viewport-width 2560 --viewport-height 1440
 4. **Конвертация в COCO:**
 
 ```bash
-python scripts/coco_converter.py --mask-dir data/masks --meta-dir data/meta --output-dir data/coco
+python data-generation/coco_converter.py --mask-dir data/masks --meta-dir data/meta --output-dir data/coco
 ```
 
 5. **Обучение модели:**

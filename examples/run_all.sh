@@ -39,29 +39,29 @@ cd "$(dirname "$0")/.."
 
 # Step 1: Generate HTML pages
 echo "Step 1/6: Generating HTML pages..."
-python scripts/html_generator.py --n "$N_PAGES"
+py data-generation/html_generator.py --n "$N_PAGES"
 echo ""
 
 # Step 2: Render screenshots
 echo "Step 2/6: Rendering screenshots with Playwright..."
-python scripts/playwright_render.py --workers 4
+py data-generation/playwright_render.py --workers 4
 echo ""
 
 # Step 3: Generate masks
 echo "Step 3/6: Generating instance masks..."
-python scripts/make_masks.py
+py data-generation/make_masks.py
 echo ""
 
 # Step 4: Convert to COCO format
 echo "Step 4/6: Converting to COCO format..."
-python scripts/coco_converter.py
+py data-generation/coco_converter.py
 echo ""
 
 # Step 5: Train model (optional)
 if [ "$SKIP_TRAIN" = false ]; then
     echo "Step 5/6: Training Mask R-CNN model..."
     echo "Note: This may take a long time. Use --skip-train to skip."
-    python detectron/train.py --epochs 10 --batch-size 2
+    py detectron/train.py --epochs 10 --batch-size 2
     echo ""
 else
     echo "Step 5/6: Skipping training (--skip-train flag set)"
@@ -71,12 +71,12 @@ fi
 # Step 6: Inference and postprocessing
 if [ "$SKIP_TRAIN" = false ] && [ -f "outputs/model_final.pth" ]; then
     echo "Step 6/6: Running inference and postprocessing..."
-    python detectron/infer_and_postprocess.py --weights outputs/model_final.pth
+    py detectron/infer_and_postprocess.py --weights outputs/model_final.pth
     echo ""
 else
     echo "Step 6/6: Skipping inference (no trained model found)"
     echo "Train a model first or use pre-trained weights:"
-    echo "  python detectron/infer_and_postprocess.py --weights <path_to_weights>"
+    echo "  py detectron/infer_and_postprocess.py --weights <path_to_weights>"
     echo ""
 fi
 
